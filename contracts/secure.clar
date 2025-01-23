@@ -129,6 +129,24 @@
 (define-read-only (get-covered-amount (protocol principal))
   (ok (default-to u0 (map-get? covered-protocols protocol))))
 
+;; Function to refund coverage
+(define-public (refund-coverage)
+  (let (
+    (user tx-sender)
+    (covered-value (unwrap! (map-get? covered-protocols user) ERR_NOT_COVERED))
+    (active-requests (filter get-active-requests (get-user-requests user)))
+  )
+    (asserts! (> covered-value u0) ERR_ZERO_VALUE)
+    (asserts! (is-eq (len active-requests) u0) ERR_REQUEST_PROCESSED)
+    
+    (map-delete covered-protocols user)
+    (match (as-contract (stx-transfer? covered-value tx-sender user))
+      success (begin
+        (var-set coverage-reserve (- (var-get coverage-reserve) covered-value))
+        (print { event: "coverage-refunded", user: user, refund-value: covered-value })
+        (ok covered-value))
+      error (err error))))
+
 ;; Function to get request status
 (define-read-only (get-request-status (requestor principal) (request-value uint))
   (match (map-get? coverage-requests { requestor: requestor, value: request-value })
