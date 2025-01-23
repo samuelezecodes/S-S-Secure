@@ -137,23 +137,24 @@
 
 ;; Function to get user's request history
 (define-read-only (get-request-history (user principal))
-  (let ((covered-amount (default-to u0 (map-get? covered-protocols user))))
+  (let (
+    (covered-amount (default-to u0 (map-get? covered-protocols user)))
+    (user-requests (get-user-requests user))
+  )
     (ok {
       is-covered: (is-some (map-get? covered-protocols user)),
       coverage-amount: covered-amount,
-      active-requests: (filter get-active-requests (get-user-requests user)),
-      processed-requests: (filter get-processed-requests (get-user-requests user))
+      active-requests: (filter get-active-requests user-requests),
+      processed-requests: (filter get-processed-requests user-requests)
     })))
 
 ;; Helper function to get all requests for a user
 (define-private (get-user-requests (user principal))
-  (map unwrap
-    (filter is-some
-      (map (lambda (request)
-        (if (is-eq (get requestor request) user)
-            (some request)
-            none))
-        (keys coverage-requests)))))
+  (list 
+    {
+      requestor: user,
+      value: (default-to u0 (map-get? covered-protocols user))
+    }))
 
 ;; Helper function to filter active requests
 (define-private (get-active-requests (request { requestor: principal, value: uint }))
