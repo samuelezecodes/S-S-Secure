@@ -129,6 +129,22 @@
 (define-read-only (get-covered-amount (protocol principal))
   (ok (default-to u0 (map-get? covered-protocols protocol))))
 
+;; Function to top up coverage
+(define-public (top-up-coverage (additional-value uint))
+  (let (
+    (user tx-sender)
+    (current-coverage (unwrap! (map-get? covered-protocols user) ERR_NOT_COVERED))
+  )
+    (asserts! (> additional-value u0) ERR_ZERO_VALUE)
+    
+    (match (stx-transfer? additional-value user (as-contract tx-sender))
+      success (begin
+        (var-set coverage-reserve (+ (var-get coverage-reserve) additional-value))
+        (map-set covered-protocols user (+ current-coverage additional-value))
+        (print { event: "coverage-topped-up", user: user, additional-value: additional-value, new-total: (+ current-coverage additional-value) })
+        (ok true))
+      error (err error))))
+
 ;; Function to refund coverage
 (define-public (refund-coverage)
   (let (
