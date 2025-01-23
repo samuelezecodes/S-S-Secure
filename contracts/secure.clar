@@ -134,3 +134,38 @@
   (match (map-get? coverage-requests { requestor: requestor, value: request-value })
     request-data (ok { state: (get state request-data), block: (get block request-data), processed-value: (get processed-value request-data) })
     ERR_REQUEST_NOT_FOUND))
+
+;; Function to get user's request history
+(define-read-only (get-request-history (user principal))
+  (let ((covered-amount (default-to u0 (map-get? covered-protocols user))))
+    (ok {
+      is-covered: (is-some (map-get? covered-protocols user)),
+      coverage-amount: covered-amount,
+      active-requests: (filter get-active-requests (get-user-requests user)),
+      processed-requests: (filter get-processed-requests (get-user-requests user))
+    })))
+
+;; Helper function to get all requests for a user
+(define-private (get-user-requests (user principal))
+  (map unwrap
+    (filter is-some
+      (map (lambda (request)
+        (if (is-eq (get requestor request) user)
+            (some request)
+            none))
+        (keys coverage-requests)))))
+
+;; Helper function to filter active requests
+(define-private (get-active-requests (request { requestor: principal, value: uint }))
+  (match (map-get? coverage-requests request)
+    request-data (is-eq (get state request-data) "pending")
+    false))
+
+;; Helper function to filter processed requests
+(define-private (get-processed-requests (request { requestor: principal, value: uint }))
+  (match (map-get? coverage-requests request)
+    request-data (or
+      (is-eq (get state request-data) "partial")
+      (is-eq (get state request-data) "declined")
+      (is-eq (get state request-data) "expired"))
+    false))
