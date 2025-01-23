@@ -23,10 +23,42 @@
 ;; Define the request expiration period (e.g., 30 days in blocks, assuming 10-minute block times)
 (define-constant REQUEST_EXPIRATION_PERIOD u4320)
 
+;; Contract parameters
+(define-data-var request-expiration-period uint REQUEST_EXPIRATION_PERIOD)
+(define-data-var minimum-coverage-value uint u1000)
+
+;; Function to update contract parameters
+(define-public (update-parameters (new-expiration-period (optional uint)) (new-minimum-coverage uint))
+  (begin
+    (asserts! (is-eq tx-sender (var-get protocol-admin)) ERR_NOT_PERMITTED)
+    (asserts! (> new-minimum-coverage u0) ERR_INVALID_VALUE)
+    
+    (match new-expiration-period
+      period (var-set request-expiration-period period)
+      false)
+      
+    (print {
+      event: "parameters-updated",
+      old-expiration: (var-get request-expiration-period),
+      new-expiration: (default-to (var-get request-expiration-period) new-expiration-period),
+      old-minimum: (var-get minimum-coverage-value),
+      new-minimum: new-minimum-coverage
+    })
+    
+    (var-set minimum-coverage-value new-minimum-coverage)
+    (ok true)))
+
+;; Function to get current parameters
+(define-read-only (get-parameters)
+  (ok {
+    expiration-period: (var-get request-expiration-period),
+    minimum-coverage: (var-get minimum-coverage-value)
+  }))
+
 ;; Function to acquire coverage
 (define-public (acquire-coverage (value uint))
   (let ((user tx-sender))
-    (asserts! (> value u0) ERR_ZERO_VALUE)
+    (asserts! (>= value (var-get minimum-coverage-value)) ERR_INVALID_VALUE)
     (asserts! (is-none (map-get? covered-protocols user)) ERR_ALREADY_COVERED)
     (match (stx-transfer? value user (as-contract tx-sender))
       success (begin

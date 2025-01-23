@@ -9,6 +9,9 @@ A Clarity smart contract providing coverage protection for blockchain protocols 
 - Automated Request Processing
 - Expiration Handling
 - Reserve Pool Management
+- Coverage Refund System
+- Coverage Top-up Capability
+- Adjustable Parameters
 
 ## Contract Functions
 
@@ -19,17 +22,27 @@ A Clarity smart contract providing coverage protection for blockchain protocols 
 - `approve-request`: Process and approve coverage requests
 - `decline-request`: Decline coverage requests
 - `check-and-expire-request`: Handle expired requests
+- `refund-coverage`: Cancel coverage and receive proportional refund
+- `top-up-coverage`: Increase existing coverage amount
 
 ### Administrative Functions
 
 - `update-admin`: Change contract administrator
+- `update-parameters`: Modify contract parameters
 - `get-reserve-balance`: View current reserve pool balance
+- `get-parameters`: View current contract parameters
 
 ### Query Functions
 
 - `is-covered`: Check if a protocol has coverage
 - `get-covered-amount`: Get coverage amount for a protocol
 - `get-request-status`: Check status of coverage requests
+- `get-request-history`: View user's request history
+
+## Contract Parameters
+
+- Request Expiration Period: Configurable timeframe for request validity
+- Minimum Coverage Value: Adjustable minimum coverage requirement
 
 ## Error Codes
 
@@ -49,10 +62,12 @@ A Clarity smart contract providing coverage protection for blockchain protocols 
 ## Usage
 
 1. Deploy contract
-2. Protocols acquire coverage by calling `acquire-coverage`
-3. Submit coverage requests using `submit-request`
-4. Admin approves/declines requests
-5. Automatic expiration after REQUEST_EXPIRATION_PERIOD blocks
+2. Configure parameters (expiration period, minimum coverage)
+3. Protocols acquire coverage by calling `acquire-coverage`
+4. Submit coverage requests using `submit-request`
+5. Admin approves/declines requests
+6. Users can top up or refund coverage as needed
+7. Automatic expiration after expiration period
 
 ## Security
 
@@ -61,6 +76,8 @@ A Clarity smart contract providing coverage protection for blockchain protocols 
 - Expiration periods
 - Admin-only functions
 - Request state validation
+- Coverage amount verification
+- Refund restrictions
 
 ## Events
 
@@ -70,3 +87,6 @@ A Clarity smart contract providing coverage protection for blockchain protocols 
 - request-declined
 - request-expired
 - admin-updated
+- coverage-refunded
+- coverage-topped-up
+- parameters-updated
